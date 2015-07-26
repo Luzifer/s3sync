@@ -1,4 +1,10 @@
 
+1.1.0 / 2015-07-26
+==================
+
+  * Fetch s3 file list in parallel
+  * Do file sync with more than 1 thread in parallel
+
 1.0.1 / 2015-07-26
 ==================
 
