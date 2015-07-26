@@ -17,6 +17,7 @@ var (
 		Delete       bool
 		Public       bool
 		PrintVersion bool
+		MaxThreads   int
 	}{}
 	version = "dev"
 )
@@ -51,6 +52,7 @@ func main() {
 	app.Flags().BoolVarP(&cfg.Public, "public", "P", false, "Make files public when syncing to S3")
 	app.Flags().BoolVarP(&cfg.Delete, "delete", "d", false, "Delete files on remote not existing on local")
 	app.Flags().BoolVarP(&cfg.PrintVersion, "version", "v", false, "Print version and quit")
+	app.Flags().IntVar(&cfg.MaxThreads, "max-threads", 10, "Use max N parallel threads for file sync")
 
 	app.Execute()
 }
@@ -76,59 +78,68 @@ func execSync(cmd *cobra.Command, args []string) {
 	remoteFiles, err := remote.ListFiles(remotePath)
 	errExit(err)
 
+	syncChannel := make(chan bool, cfg.MaxThreads)
 	for i, localFile := range localFiles {
-		fmt.Printf("(%d / %d) %s ", i+1, len(localFiles), localFile.Filename)
-		needsCopy := true
-		for _, remoteFile := range remoteFiles {
-			if remoteFile.Filename == localFile.Filename && remoteFile.MD5 == localFile.MD5 {
-				needsCopy = false
-				break
+		syncChannel <- true
+		go func(i int, localFile file) {
+			defer func() { <-syncChannel }()
+
+			needsCopy := true
+			for _, remoteFile := range remoteFiles {
+				if remoteFile.Filename == localFile.Filename && remoteFile.MD5 == localFile.MD5 {
+					needsCopy = false
+					break
+				}
 			}
-		}
-		if needsCopy {
-			l, err := local.ReadFile(path.Join(localPath, localFile.Filename))
-			if err != nil {
-				fmt.Printf("ERR: %s\n", err)
-				continue
+			if needsCopy {
+				l, err := local.ReadFile(path.Join(localPath, localFile.Filename))
+				if err != nil {
+					fmt.Printf("(%d / %d) %s ERR: %s\n", i+1, len(localFiles), localFile.Filename, err)
+					return
+				}
+
+				buffer, err := ioutil.ReadAll(l)
+				if err != nil {
+					fmt.Printf("(%d / %d) %s ERR: %s\n", i+1, len(localFiles), localFile.Filename, err)
+					return
+				}
+				l.Close()
+
+				err = remote.WriteFile(path.Join(remotePath, localFile.Filename), bytes.NewReader(buffer), cfg.Public)
+				if err != nil {
+					fmt.Printf("(%d / %d) %s ERR: %s\n", i+1, len(localFiles), localFile.Filename, err)
+					return
+				}
+
+				fmt.Printf("(%d / %d) %s OK\n", i+1, len(localFiles), localFile.Filename)
+				return
 			}
 
-			buffer, err := ioutil.ReadAll(l)
-			if err != nil {
-				fmt.Printf("ERR: %s\n", err)
-				continue
-			}
-			l.Close()
-
-			err = remote.WriteFile(path.Join(remotePath, localFile.Filename), bytes.NewReader(buffer), cfg.Public)
-			if err != nil {
-				fmt.Printf("ERR: %s\n", err)
-				continue
-			}
-
-			fmt.Printf("OK\n")
-			continue
-		}
-
-		fmt.Printf("Skip\n")
+			fmt.Printf("(%d / %d) %s Skip\n", i+1, len(localFiles), localFile.Filename)
+		}(i, localFile)
 	}
 
 	if cfg.Delete {
 		for _, remoteFile := range remoteFiles {
-			needsDeletion := true
-			for _, localFile := range localFiles {
-				if localFile.Filename == remoteFile.Filename {
-					needsDeletion = false
-				}
-			}
+			syncChannel <- true
+			go func(remoteFile file) {
+				defer func() { <-syncChannel }()
 
-			if needsDeletion {
-				fmt.Printf("delete: %s ", remoteFile.Filename)
-				if err := remote.DeleteFile(path.Join(remotePath, remoteFile.Filename)); err != nil {
-					fmt.Printf("ERR: %s\n", err)
-					continue
+				needsDeletion := true
+				for _, localFile := range localFiles {
+					if localFile.Filename == remoteFile.Filename {
+						needsDeletion = false
+					}
 				}
-				fmt.Printf("OK\n")
-			}
+
+				if needsDeletion {
+					if err := remote.DeleteFile(path.Join(remotePath, remoteFile.Filename)); err != nil {
+						fmt.Printf("delete: %s ERR: %s\n", remoteFile.Filename, err)
+						return
+					}
+					fmt.Printf("delete: %s OK\n", remoteFile.Filename)
+				}
+			}(remoteFile)
 		}
 	}
 }
