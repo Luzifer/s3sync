@@ -27,6 +27,7 @@ Usage:
 Flags:
   -d, --delete=false: Delete files on remote not existing on local
   -h, --help=false: help for s3sync
+      --max-threads=10: Use max N parallel threads for file sync
   -P, --public=false: Make files public when syncing to S3
   -v, --version=false: Print version and quit
 
