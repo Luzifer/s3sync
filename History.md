@@ -1,4 +1,10 @@
 
+1.1.1 / 2015-07-26
+==================
+
+  * Fix: Remove `-v` shorthand as it lead to confusion with "verbose" flags
+  * Fix: Made channels bigger for S3 processing
+
 1.1.0 / 2015-07-26
 ==================
 
