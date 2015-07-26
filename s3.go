@@ -47,8 +47,8 @@ func (s *s3Provider) ListFiles(prefix string) ([]file, error) {
 
 	processedPrefixes := []string{}
 
-	prefixChan := make(chan *string, 100)
-	outputChan := make(chan file, 100)
+	prefixChan := make(chan *string, 10000)
+	outputChan := make(chan file, 10000)
 	errChan := make(chan error, 10)
 	syncChan := make(chan bool, 10)
 	doneTimer := time.NewTicker(500 * time.Millisecond)
