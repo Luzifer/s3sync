@@ -8,6 +8,7 @@
 
 - Static binary, no dependencies required
 - Sync files only if required (judged by MD5 checksum)
+- Using multiple threads to upload the transfer is quite fast
 - Optionally delete files at target
 - Optionally make files public on sync (only if file needs sync)
 - Sync local-to-s3, s3-to-local, local-to-local or s3-to-s3
@@ -29,7 +30,7 @@ Flags:
   -h, --help=false: help for s3sync
       --max-threads=10: Use max N parallel threads for file sync
   -P, --public=false: Make files public when syncing to S3
-  -v, --version=false: Print version and quit
+      --version=false: Print version and quit
 
 # s3sync -d 1/ s3://knut-test-s3sync/
 (1 / 3) 05/11/pwd_luzifer_io.png OK
