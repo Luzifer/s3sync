@@ -44,29 +44,56 @@ func (s *s3Provider) ListFiles(prefix string) ([]file, error) {
 		return out, err
 	}
 
-	in := &s3.ListObjectsInput{
-		Bucket: aws.String(bucket),
-		Marker: nil,
-		Prefix: aws.String(path),
-	}
+	prefixList := []*string{aws.String(path)}
+
 	for {
-		o, err := s.conn.ListObjects(in)
-		if err != nil {
-			return out, err
+		fmt.Printf("Scanning prefixes (%d left)...\r", len(prefixList))
+		var p *string
+		p, prefixList = prefixList[0], prefixList[1:]
+		in := &s3.ListObjectsInput{
+			Bucket:    aws.String(bucket),
+			Prefix:    p,
+			MaxKeys:   aws.Long(1000),
+			Delimiter: aws.String("/"),
+		}
+		for {
+			o, err := s.conn.ListObjects(in)
+			if err != nil {
+				return out, err
+			}
+
+			for _, v := range o.Contents {
+				out = append(out, file{
+					Filename: *v.Key,
+					Size:     *v.Size,
+					MD5:      strings.Trim(*v.ETag, "\""), // Wat?
+				})
+			}
+
+			if len(o.CommonPrefixes) > 0 {
+				for _, cp := range o.CommonPrefixes {
+					found := false
+					for _, v := range prefixList {
+						if v == cp.Prefix {
+							found = true
+						}
+					}
+					if !found {
+						prefixList = append(prefixList, cp.Prefix)
+					}
+				}
+			}
+
+			if !*o.IsTruncated {
+				break
+			}
+			in.Marker = o.NextMarker
 		}
 
-		for _, v := range o.Contents {
-			out = append(out, file{
-				Filename: *v.Key,
-				Size:     *v.Size,
-				MD5:      strings.Trim(*v.ETag, "\""), // Wat?
-			})
-		}
-
-		if o.NextMarker == nil {
+		if len(prefixList) == 0 {
+			fmt.Printf("\n")
 			break
 		}
-		in.Marker = o.NextMarker
 	}
 
 	return out, nil
