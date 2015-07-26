@@ -1,0 +1,62 @@
+{
+	"ImportPath": "github.com/Luzifer/s3sync",
+	"GoVersion": "go1.4.2",
+	"Deps": [
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/aws",
+			"Comment": "v0.6.4-2-g168a70b",
+			"Rev": "168a70b9c21a4f60166d7925b690356605907adb"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/internal/endpoints",
+			"Comment": "v0.6.4-2-g168a70b",
+			"Rev": "168a70b9c21a4f60166d7925b690356605907adb"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/internal/protocol/query",
+			"Comment": "v0.6.4-2-g168a70b",
+			"Rev": "168a70b9c21a4f60166d7925b690356605907adb"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/internal/protocol/rest",
+			"Comment": "v0.6.4-2-g168a70b",
+			"Rev": "168a70b9c21a4f60166d7925b690356605907adb"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/internal/protocol/restxml",
+			"Comment": "v0.6.4-2-g168a70b",
+			"Rev": "168a70b9c21a4f60166d7925b690356605907adb"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/internal/protocol/xml/xmlutil",
+			"Comment": "v0.6.4-2-g168a70b",
+			"Rev": "168a70b9c21a4f60166d7925b690356605907adb"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/internal/signer/v4",
+			"Comment": "v0.6.4-2-g168a70b",
+			"Rev": "168a70b9c21a4f60166d7925b690356605907adb"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/service/s3",
+			"Comment": "v0.6.4-2-g168a70b",
+			"Rev": "168a70b9c21a4f60166d7925b690356605907adb"
+		},
+		{
+			"ImportPath": "github.com/inconshreveable/mousetrap",
+			"Rev": "76626ae9c91c4f2a10f34cad8ce83ea42c93bb75"
+		},
+		{
+			"ImportPath": "github.com/spf13/cobra",
+			"Rev": "385fc87e4343efec233811d3d933509e8975d11a"
+		},
+		{
+			"ImportPath": "github.com/spf13/pflag",
+			"Rev": "67cbc198fd11dab704b214c1e629a97af392c085"
+		},
+		{
+			"ImportPath": "github.com/vaughan0/go-ini",
+			"Rev": "a98ad7ee00ec53921f08832bc06ecf7fd600e6a1"
+		}
+	]
+}
