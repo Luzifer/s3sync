@@ -51,7 +51,7 @@ func main() {
 
 	app.Flags().BoolVarP(&cfg.Public, "public", "P", false, "Make files public when syncing to S3")
 	app.Flags().BoolVarP(&cfg.Delete, "delete", "d", false, "Delete files on remote not existing on local")
-	app.Flags().BoolVarP(&cfg.PrintVersion, "version", "v", false, "Print version and quit")
+	app.Flags().BoolVar(&cfg.PrintVersion, "version", false, "Print version and quit")
 	app.Flags().IntVar(&cfg.MaxThreads, "max-threads", 10, "Use max N parallel threads for file sync")
 
 	app.Execute()
