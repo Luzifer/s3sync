@@ -18,24 +18,17 @@
 2. Execute your sync
 
 ```bash
-# s3sync help
+# s3sync --help
 Sync files from <from> to <to>
 
 Usage:
   s3sync <from> <to> [flags]
-  s3sync [command]
-
-Available Commands:
-  version     Returns the current version of s3sync
-  help        Help about any command
 
 Flags:
   -d, --delete=false: Delete files on remote not existing on local
   -h, --help=false: help for s3sync
   -P, --public=false: Make files public when syncing to S3
-
-
-Use "s3sync [command] --help" for more information about a command.
+  -v, --version=false: Print version and quit
 
 # s3sync -d 1/ s3://knut-test-s3sync/
 (1 / 3) 05/11/pwd_luzifer_io.png OK
