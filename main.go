@@ -14,8 +14,9 @@ import (
 
 var (
 	cfg = struct {
-		Delete bool
-		Public bool
+		Delete       bool
+		Public       bool
+		PrintVersion bool
 	}{}
 	version = "dev"
 )
@@ -39,18 +40,17 @@ func main() {
 		Use:   "s3sync <from> <to>",
 		Short: "Sync files from <from> to <to>",
 		Run:   execSync,
-	}
-
-	app.AddCommand(&cobra.Command{
-		Use:   "version",
-		Short: "Returns the current version of s3sync",
-		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Printf("s3sync %s\n", version)
+		PreRun: func(cmd *cobra.Command, args []string) {
+			if cfg.PrintVersion {
+				fmt.Printf("s3sync %s\n", version)
+				os.Exit(0)
+			}
 		},
-	})
+	}
 
 	app.Flags().BoolVarP(&cfg.Public, "public", "P", false, "Make files public when syncing to S3")
 	app.Flags().BoolVarP(&cfg.Delete, "delete", "d", false, "Delete files on remote not existing on local")
+	app.Flags().BoolVarP(&cfg.PrintVersion, "version", "v", false, "Print version and quit")
 
 	app.Execute()
 }
