@@ -9,6 +9,7 @@ import (
 	"path"
 	"strings"
 
+	"github.com/Luzifer/s3sync/logger"
 	"github.com/spf13/cobra"
 )
 
@@ -18,7 +19,9 @@ var (
 		Public       bool
 		PrintVersion bool
 		MaxThreads   int
+		logLevel     uint
 	}{}
+	stdout  *logger.Logger
 	version = "dev"
 )
 
@@ -53,6 +56,11 @@ func main() {
 	app.Flags().BoolVarP(&cfg.Delete, "delete", "d", false, "Delete files on remote not existing on local")
 	app.Flags().BoolVar(&cfg.PrintVersion, "version", false, "Print version and quit")
 	app.Flags().IntVar(&cfg.MaxThreads, "max-threads", 10, "Use max N parallel threads for file sync")
+	app.Flags().UintVar(&cfg.logLevel, "loglevel", 2, "Amount of log output (0 = Error only, 3 = Debug)")
+
+	app.ParseFlags(os.Args[1:])
+
+	stdout = logger.New(logger.LogLevel(cfg.logLevel))
 
 	app.Execute()
 }
@@ -94,28 +102,28 @@ func execSync(cmd *cobra.Command, args []string) {
 			if needsCopy {
 				l, err := local.ReadFile(path.Join(localPath, localFile.Filename))
 				if err != nil {
-					fmt.Printf("(%d / %d) %s ERR: %s\n", i+1, len(localFiles), localFile.Filename, err)
+					stdout.ErrorF("(%d / %d) %s ERR: %s\n", i+1, len(localFiles), localFile.Filename, err)
 					return
 				}
 
 				buffer, err := ioutil.ReadAll(l)
 				if err != nil {
-					fmt.Printf("(%d / %d) %s ERR: %s\n", i+1, len(localFiles), localFile.Filename, err)
+					stdout.ErrorF("(%d / %d) %s ERR: %s\n", i+1, len(localFiles), localFile.Filename, err)
 					return
 				}
 				l.Close()
 
 				err = remote.WriteFile(path.Join(remotePath, localFile.Filename), bytes.NewReader(buffer), cfg.Public)
 				if err != nil {
-					fmt.Printf("(%d / %d) %s ERR: %s\n", i+1, len(localFiles), localFile.Filename, err)
+					stdout.ErrorF("(%d / %d) %s ERR: %s\n", i+1, len(localFiles), localFile.Filename, err)
 					return
 				}
 
-				fmt.Printf("(%d / %d) %s OK\n", i+1, len(localFiles), localFile.Filename)
+				stdout.InfoF("(%d / %d) %s OK\n", i+1, len(localFiles), localFile.Filename)
 				return
 			}
 
-			fmt.Printf("(%d / %d) %s Skip\n", i+1, len(localFiles), localFile.Filename)
+			stdout.DebugF("(%d / %d) %s Skip\n", i+1, len(localFiles), localFile.Filename)
 		}(i, localFile)
 	}
 
@@ -134,10 +142,10 @@ func execSync(cmd *cobra.Command, args []string) {
 
 				if needsDeletion {
 					if err := remote.DeleteFile(path.Join(remotePath, remoteFile.Filename)); err != nil {
-						fmt.Printf("delete: %s ERR: %s\n", remoteFile.Filename, err)
+						stdout.ErrorF("delete: %s ERR: %s\n", remoteFile.Filename, err)
 						return
 					}
-					fmt.Printf("delete: %s OK\n", remoteFile.Filename)
+					stdout.InfoF("delete: %s OK\n", remoteFile.Filename)
 				}
 			}(remoteFile)
 		}
@@ -146,7 +154,7 @@ func execSync(cmd *cobra.Command, args []string) {
 
 func errExit(err error) {
 	if err != nil {
-		fmt.Printf("ERR: %s\n", err)
+		stdout.ErrorF("ERR: %s\n", err)
 		os.Exit(1)
 	}
 }

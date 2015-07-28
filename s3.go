@@ -78,7 +78,7 @@ func (s *s3Provider) ListFiles(prefix string) ([]file, error) {
 		case err := <-errChan:
 			return out, err
 		case <-doneTimer.C:
-			fmt.Printf("Scanning prefixes (%d working, %d left)...\r", len(syncChan), len(prefixChan))
+			stdout.DebugF("Scanning prefixes (%d working, %d left)...\r", len(syncChan), len(prefixChan))
 			if len(prefixChan) == 0 && len(syncChan) == 0 {
 				fmt.Printf("\n")
 				return out, nil
