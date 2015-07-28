@@ -1,4 +1,9 @@
 
+1.2.0 / 2015-07-28
+==================
+
+  * Added levels to logging to silence output if required
+
 1.1.1 / 2015-07-26
 ==================
 
