@@ -8,6 +8,7 @@ import (
 	"os"
 	"path"
 	"strings"
+	"time"
 
 	"github.com/Luzifer/s3sync/logger"
 	"github.com/spf13/cobra"
@@ -149,6 +150,13 @@ func execSync(cmd *cobra.Command, args []string) {
 				}
 			}(remoteFile)
 		}
+	}
+
+	for {
+		if len(syncChannel) == 0 {
+			break
+		}
+		<-time.After(time.Second)
 	}
 }
 
