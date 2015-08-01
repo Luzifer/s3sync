@@ -1,4 +1,9 @@
 
+1.2.2 / 2015-08-02
+==================
+
+  * Fix: Updated aws-sdk and solved issues with latest version
+
 1.2.1 / 2015-08-01
 ==================
 
