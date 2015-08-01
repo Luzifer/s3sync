@@ -92,7 +92,7 @@ func (s *s3Provider) readS3FileList(bucket string, path *string, outputChan chan
 	in := &s3.ListObjectsInput{
 		Bucket:    aws.String(bucket),
 		Prefix:    path,
-		MaxKeys:   aws.Long(1000),
+		MaxKeys:   aws.Int64(1000),
 		Delimiter: aws.String("/"),
 	}
 	for {

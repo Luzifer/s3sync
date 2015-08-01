@@ -4,43 +4,43 @@
 	"Deps": [
 		{
 			"ImportPath": "github.com/aws/aws-sdk-go/aws",
-			"Comment": "v0.6.4-2-g168a70b",
-			"Rev": "168a70b9c21a4f60166d7925b690356605907adb"
+			"Comment": "v0.7.1-4-g1c75632",
+			"Rev": "1c75632eb9b77bb3d8e6416fbd8f3e98fc1367db"
 		},
 		{
 			"ImportPath": "github.com/aws/aws-sdk-go/internal/endpoints",
-			"Comment": "v0.6.4-2-g168a70b",
-			"Rev": "168a70b9c21a4f60166d7925b690356605907adb"
+			"Comment": "v0.7.1-4-g1c75632",
+			"Rev": "1c75632eb9b77bb3d8e6416fbd8f3e98fc1367db"
 		},
 		{
 			"ImportPath": "github.com/aws/aws-sdk-go/internal/protocol/query",
-			"Comment": "v0.6.4-2-g168a70b",
-			"Rev": "168a70b9c21a4f60166d7925b690356605907adb"
+			"Comment": "v0.7.1-4-g1c75632",
+			"Rev": "1c75632eb9b77bb3d8e6416fbd8f3e98fc1367db"
 		},
 		{
 			"ImportPath": "github.com/aws/aws-sdk-go/internal/protocol/rest",
-			"Comment": "v0.6.4-2-g168a70b",
-			"Rev": "168a70b9c21a4f60166d7925b690356605907adb"
+			"Comment": "v0.7.1-4-g1c75632",
+			"Rev": "1c75632eb9b77bb3d8e6416fbd8f3e98fc1367db"
 		},
 		{
 			"ImportPath": "github.com/aws/aws-sdk-go/internal/protocol/restxml",
-			"Comment": "v0.6.4-2-g168a70b",
-			"Rev": "168a70b9c21a4f60166d7925b690356605907adb"
+			"Comment": "v0.7.1-4-g1c75632",
+			"Rev": "1c75632eb9b77bb3d8e6416fbd8f3e98fc1367db"
 		},
 		{
 			"ImportPath": "github.com/aws/aws-sdk-go/internal/protocol/xml/xmlutil",
-			"Comment": "v0.6.4-2-g168a70b",
-			"Rev": "168a70b9c21a4f60166d7925b690356605907adb"
+			"Comment": "v0.7.1-4-g1c75632",
+			"Rev": "1c75632eb9b77bb3d8e6416fbd8f3e98fc1367db"
 		},
 		{
 			"ImportPath": "github.com/aws/aws-sdk-go/internal/signer/v4",
-			"Comment": "v0.6.4-2-g168a70b",
-			"Rev": "168a70b9c21a4f60166d7925b690356605907adb"
+			"Comment": "v0.7.1-4-g1c75632",
+			"Rev": "1c75632eb9b77bb3d8e6416fbd8f3e98fc1367db"
 		},
 		{
 			"ImportPath": "github.com/aws/aws-sdk-go/service/s3",
-			"Comment": "v0.6.4-2-g168a70b",
-			"Rev": "168a70b9c21a4f60166d7925b690356605907adb"
+			"Comment": "v0.7.1-4-g1c75632",
+			"Rev": "1c75632eb9b77bb3d8e6416fbd8f3e98fc1367db"
 		},
 		{
 			"ImportPath": "github.com/inconshreveable/mousetrap",
