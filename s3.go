@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"mime"
+	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -32,7 +33,7 @@ func (s *s3Provider) getBucketPath(prefix string) (bucket string, path string, e
 	}
 
 	bucket = matches[1]
-	path = matches[2]
+	path = strings.Replace(matches[2], string(os.PathSeparator), "/", -1)
 
 	return
 }

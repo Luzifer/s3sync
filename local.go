@@ -48,7 +48,7 @@ func (l *localProvider) ListFiles(prefix string) ([]file, error) {
 			}
 
 			out = append(out, file{
-				Filename: strings.TrimLeft(strings.Replace(path, prefix, "", 1), "/"),
+				Filename: strings.TrimLeft(strings.Replace(path, prefix, "", 1), string(os.PathSeparator)),
 				Size:     f.Size(),
 				MD5:      fmt.Sprintf("%x", md5.Sum(content)),
 			})
