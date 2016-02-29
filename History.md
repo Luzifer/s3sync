@@ -1,4 +1,9 @@
 
+1.2.3 / 2016-02-29
+==================
+
+  * Fix: Synced files from Windows did not have subdirs
+
 1.2.2 / 2015-08-02
 ==================
 
