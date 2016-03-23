@@ -15,7 +15,8 @@ import (
 )
 
 type s3Provider struct {
-	conn *s3.S3
+	conn            *s3.S3
+	requestedPrefix string
 }
 
 func newS3Provider() (*s3Provider, error) {
@@ -34,6 +35,7 @@ func (s *s3Provider) getBucketPath(prefix string) (bucket string, path string, e
 
 	bucket = matches[1]
 	path = strings.Replace(matches[2], string(os.PathSeparator), "/", -1)
+	s.requestedPrefix = path
 
 	return
 }
@@ -105,7 +107,7 @@ func (s *s3Provider) readS3FileList(bucket string, path *string, outputChan chan
 
 		for _, v := range o.Contents {
 			outputChan <- file{
-				Filename: *v.Key,
+				Filename: strings.Replace(*v.Key, s.requestedPrefix, "", 1),
 				Size:     *v.Size,
 				MD5:      strings.Trim(*v.ETag, "\""), // Wat?
 			}
