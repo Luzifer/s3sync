@@ -1,6 +1,7 @@
 # Luzifer / s3sync
 
-[![License: Apache v2.0](https://badge.luzifer.io/v1/badge?color=5d79b5&title=license&text=Apache+v2.0)](http://www.apache.org/licenses/LICENSE-2.0) [![Gobuild Download](https://badge.luzifer.io/v1/badge?color=5d79b5&title=Download&text=on+GoBuilder.me)](https://gobuilder.me/github.com/Luzifer/s3sync)
+![](https://badges.fyi/github/license/Luzifer/s3sync)
+![](https://badges.fyi/github/downloads/Luzifer/s3sync)
 
 `s3sync` is a small utility to sync local directories from/to Amazon S3 without installing any dependencies. Just put the binary somewhere into your path and set three ENV variables and your're ready to sync.
 
@@ -48,3 +49,7 @@ Flags:
 (2 / 3) 07/26/bkm.png Skip
 (3 / 3) 07/26/luzifer_io.png Skip
 ```
+
+---
+
+![](https://d2o84fseuhwkxk.cloudfront.net/s3sync.svg)
