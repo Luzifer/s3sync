@@ -1,3 +1,7 @@
+# 1.2.6 / 2017-05-29
+
+  * Migrate and update Godeps
+
 # 1.2.5 / 2017-05-29
 
   * Noop: Enable Github releases
