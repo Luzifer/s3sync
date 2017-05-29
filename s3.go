@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 )
 
@@ -20,8 +21,9 @@ type s3Provider struct {
 }
 
 func newS3Provider() (*s3Provider, error) {
+	sess := session.Must(session.NewSession())
 	return &s3Provider{
-		conn: s3.New(&aws.Config{}),
+		conn: s3.New(sess),
 	}, nil
 }
 
