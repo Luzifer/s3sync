@@ -1,3 +1,8 @@
+# 1.3.0 / 2017-11-13
+
+  * Update dependencies, switch to dep for vendoring
+  * Update meta files
+
 # 1.2.6 / 2017-05-29
 
   * Migrate and update Godeps
