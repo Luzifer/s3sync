@@ -8,7 +8,7 @@
 ## Features
 
 - Static binary, no dependencies required
-- Sync files only if required (judged by MD5 checksum)
+- Sync files only if required (judged by file size & modify-date)
 - Using multiple threads to upload the transfer is quite fast
 - Optionally delete files at target
 - Optionally make files public on sync (only if file needs sync)
@@ -49,7 +49,3 @@ Flags:
 (2 / 3) 07/26/bkm.png Skip
 (3 / 3) 07/26/luzifer_io.png Skip
 ```
-
----
-
-![](https://d2o84fseuhwkxk.cloudfront.net/s3sync.svg)

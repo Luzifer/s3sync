@@ -1,137 +1,182 @@
 package main
 
 import (
-	"bytes"
-	"fmt"
-	"io"
-	"io/ioutil"
 	"os"
 	"path"
 	"strings"
 	"time"
 
-	"github.com/Luzifer/s3sync/logger"
-	"github.com/spf13/cobra"
+	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
+
+	"github.com/Luzifer/rconfig/v2"
+	"github.com/Luzifer/s3sync/pkg/fsprovider"
 )
 
 var (
 	cfg = struct {
-		Delete       bool
-		Public       bool
-		PrintVersion bool
-		MaxThreads   int
-		logLevel     uint
+		Delete         bool   `flag:"delete,d" default:"false" description:"Delete files on remote not existing on local"`
+		Endpoint       string `flag:"endpoint" default:"" description:"Switch S3 endpoint (i.e. for MinIO compatibility)"`
+		LogLevel       string `flag:"log-level" default:"info" description:"Log level (debug, info, warn, error, fatal)"`
+		MaxThreads     int    `flag:"max-threads" default:"10" description:"Use max N parallel threads for file sync"`
+		Public         bool   `flag:"public,P" default:"false" description:"Make files public when syncing to S3"`
+		VersionAndExit bool   `flag:"version" default:"false" description:"Prints current version and exits"`
 	}{}
-	stdout  *logger.Logger
+
 	version = "dev"
 )
 
-type file struct {
-	Filename string
-	Size     int64
-	MD5      string
+func getFSProvider(prefix string) (fsprovider.Provider, error) {
+	if strings.HasPrefix(prefix, "s3://") {
+		p, err := fsprovider.NewS3(cfg.Endpoint)
+		return p, errors.Wrap(err, "getting s3 provider")
+	}
+	return fsprovider.NewLocal(), nil
 }
 
-type filesystemProvider interface {
-	WriteFile(path string, content io.ReadSeeker, public bool) error
-	ReadFile(path string) (io.ReadCloser, error)
-	ListFiles(prefix string) ([]file, error)
-	DeleteFile(path string) error
-	GetAbsolutePath(path string) (string, error)
+func initApp() error {
+	rconfig.AutoEnv(true)
+	if err := rconfig.ParseAndValidate(&cfg); err != nil {
+		return errors.Wrap(err, "parsing cli options")
+	}
+
+	l, err := logrus.ParseLevel(cfg.LogLevel)
+	if err != nil {
+		return errors.Wrap(err, "parsing log-level")
+	}
+	logrus.SetLevel(l)
+
+	return nil
 }
 
 func main() {
-	app := cobra.Command{
-		Use:   "s3sync <from> <to>",
-		Short: "Sync files from <from> to <to>",
-		Run:   execSync,
-		PreRun: func(cmd *cobra.Command, args []string) {
-			if cfg.PrintVersion {
-				fmt.Printf("s3sync %s\n", version)
-				os.Exit(0)
-			}
-		},
+	var err error
+	if err = initApp(); err != nil {
+		logrus.WithError(err).Fatal("initializing app")
 	}
 
-	app.Flags().BoolVarP(&cfg.Public, "public", "P", false, "Make files public when syncing to S3")
-	app.Flags().BoolVarP(&cfg.Delete, "delete", "d", false, "Delete files on remote not existing on local")
-	app.Flags().BoolVar(&cfg.PrintVersion, "version", false, "Print version and quit")
-	app.Flags().IntVar(&cfg.MaxThreads, "max-threads", 10, "Use max N parallel threads for file sync")
-	app.Flags().UintVar(&cfg.logLevel, "loglevel", 2, "Amount of log output (0 = Error only, 3 = Debug)")
+	if cfg.VersionAndExit {
+		logrus.WithField("version", version).Info("s3sync")
+		os.Exit(0)
+	}
 
-	app.ParseFlags(os.Args[1:])
-
-	stdout = logger.New(logger.LogLevel(cfg.logLevel))
-
-	app.Execute()
+	if err = runSync(rconfig.Args()[1:]); err != nil {
+		logrus.WithError(err).Fatal("running sync")
+	}
 }
 
-func execSync(cmd *cobra.Command, args []string) {
+//nolint:funlen,gocognit,gocyclo // Should be kept as single unit
+func runSync(args []string) error {
+	//nolint:gomnd // Simple count of parameters, makes no sense to export
 	if len(args) != 2 {
-		cmd.Usage()
-		os.Exit(1)
+		return errors.New("missing required arguments: s3sync <from> <to>")
 	}
 
 	local, err := getFSProvider(args[0])
-	errExit(err)
+	if err != nil {
+		return errors.Wrap(err, "getting local provider")
+	}
 	remote, err := getFSProvider(args[1])
-	errExit(err)
+	if err != nil {
+		return errors.Wrap(err, "getting remote provider")
+	}
 
 	localPath, err := local.GetAbsolutePath(args[0])
-	errExit(err)
+	if err != nil {
+		return errors.Wrap(err, "getting local path")
+	}
 	remotePath, err := remote.GetAbsolutePath(args[1])
-	errExit(err)
+	if err != nil {
+		return errors.Wrap(err, "getting remote path")
+	}
 
 	localFiles, err := local.ListFiles(localPath)
-	errExit(err)
+	if err != nil {
+		return errors.Wrap(err, "listing local files")
+	}
 	remoteFiles, err := remote.ListFiles(remotePath)
-	errExit(err)
+	if err != nil {
+		return errors.Wrap(err, "listing remote files")
+	}
 
-	syncChannel := make(chan bool, cfg.MaxThreads)
+	var (
+		nErr        int
+		syncChannel = make(chan bool, cfg.MaxThreads)
+	)
+
 	for i, localFile := range localFiles {
 		syncChannel <- true
-		go func(i int, localFile file) {
+		go func(i int, localFile fsprovider.File) {
 			defer func() { <-syncChannel }()
 
-			needsCopy := true
+			var (
+				logger      = logrus.WithField("filename", localFile.Filename)
+				debugLogger = logger.WithField("tx_reason", "missing")
+
+				needsCopy   bool
+				remoteFound bool
+			)
+
 			for _, remoteFile := range remoteFiles {
-				if remoteFile.Filename == localFile.Filename && remoteFile.MD5 == localFile.MD5 {
+				if remoteFile.Filename != localFile.Filename {
+					// Different file, do not compare
+					continue
+				}
+
+				// We found a match, lets check whether tx is required
+				remoteFound = true
+
+				switch {
+				case remoteFile.Size != localFile.Size:
+					debugLogger = debugLogger.WithField("tx_reason", "size-mismatch").WithField("ls", localFile.Size).WithField("rs", remoteFile.Size)
+					needsCopy = true
+
+				case localFile.LastModified.After(remoteFile.LastModified):
+					debugLogger = debugLogger.WithField("tx_reason", "local-newer")
+					needsCopy = true
+
+				default:
+					// No reason to update
 					needsCopy = false
-					break
 				}
+
+				break
 			}
-			if needsCopy {
-				l, err := local.ReadFile(path.Join(localPath, localFile.Filename))
-				if err != nil {
-					stdout.ErrorF("(%d / %d) %s ERR: %s\n", i+1, len(localFiles), localFile.Filename, err)
-					return
-				}
 
-				buffer, err := ioutil.ReadAll(l)
-				if err != nil {
-					stdout.ErrorF("(%d / %d) %s ERR: %s\n", i+1, len(localFiles), localFile.Filename, err)
-					return
-				}
-				l.Close()
-
-				err = remote.WriteFile(path.Join(remotePath, localFile.Filename), bytes.NewReader(buffer), cfg.Public)
-				if err != nil {
-					stdout.ErrorF("(%d / %d) %s ERR: %s\n", i+1, len(localFiles), localFile.Filename, err)
-					return
-				}
-
-				stdout.InfoF("(%d / %d) %s OK\n", i+1, len(localFiles), localFile.Filename)
+			if remoteFound && !needsCopy {
+				logger.Debug("skipped transfer")
 				return
 			}
 
-			stdout.DebugF("(%d / %d) %s Skip\n", i+1, len(localFiles), localFile.Filename)
+			debugLogger.Debug("starting transfer")
+
+			l, err := local.ReadFile(path.Join(localPath, localFile.Filename))
+			if err != nil {
+				logger.WithError(err).Error("reading local file")
+				nErr++
+				return
+			}
+			defer func() {
+				if err := l.Close(); err != nil {
+					logger.WithError(err).Error("closing local file")
+				}
+			}()
+
+			err = remote.WriteFile(path.Join(remotePath, localFile.Filename), l, cfg.Public)
+			if err != nil {
+				logger.WithError(err).Error("writing remote file")
+				nErr++
+				return
+			}
+
+			logger.Info("transferred file")
 		}(i, localFile)
 	}
 
 	if cfg.Delete {
 		for _, remoteFile := range remoteFiles {
 			syncChannel <- true
-			go func(remoteFile file) {
+			go func(remoteFile fsprovider.File) {
 				defer func() { <-syncChannel }()
 
 				needsDeletion := true
@@ -143,33 +188,19 @@ func execSync(cmd *cobra.Command, args []string) {
 
 				if needsDeletion {
 					if err := remote.DeleteFile(path.Join(remotePath, remoteFile.Filename)); err != nil {
-						stdout.ErrorF("delete: %s ERR: %s\n", remoteFile.Filename, err)
+						logrus.WithField("filename", remoteFile.Filename).WithError(err).Error("deleting remote file")
+						nErr++
 						return
 					}
-					stdout.InfoF("delete: %s OK\n", remoteFile.Filename)
+					logrus.WithField("filename", remoteFile.Filename).Info("deleted remote file")
 				}
 			}(remoteFile)
 		}
 	}
 
-	for {
-		if len(syncChannel) == 0 {
-			break
-		}
+	for len(syncChannel) > 0 {
 		<-time.After(time.Second)
 	}
-}
 
-func errExit(err error) {
-	if err != nil {
-		stdout.ErrorF("ERR: %s\n", err)
-		os.Exit(1)
-	}
-}
-
-func getFSProvider(prefix string) (filesystemProvider, error) {
-	if strings.HasPrefix(prefix, "s3://") {
-		return newS3Provider()
-	}
-	return newLocalProvider(), nil
+	return nil
 }
