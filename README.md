@@ -21,31 +21,28 @@
 
 ```bash
 # s3sync --help
-Sync files from <from> to <to>
+Usage of s3sync:
+  -d, --delete             Delete files on remote not existing on local
+      --endpoint string    Switch S3 endpoint (i.e. for MinIO compatibility)
+      --log-level string   Log level (debug, info, warn, error, fatal) (default "info")
+      --max-threads int    Use max N parallel threads for file sync (default 10)
+  -P, --public             Make files public when syncing to S3
+      --version            Prints current version and exits
 
-Usage:
-  s3sync <from> <to> [flags]
 
-Flags:
-  -d, --delete=false: Delete files on remote not existing on local
-  -h, --help=false: help for s3sync
-      --max-threads=10: Use max N parallel threads for file sync
-  -P, --public=false: Make files public when syncing to S3
-      --version=false: Print version and quit
+# echo "ello" >test.txt
+# echo "foobar" >test2.txt
 
-# s3sync -d 1/ s3://knut-test-s3sync/
-(1 / 3) 05/11/pwd_luzifer_io.png OK
-(2 / 3) 07/26/bkm.png OK
-(3 / 3) 07/26/luzifer_io.png OK
+# s3sync --delete ./ s3://test/
+time="2023-06-09T17:15:09+02:00" level=info msg="transferred file" filename=test2.txt
+time="2023-06-09T17:15:09+02:00" level=info msg="transferred file" filename=test.txt
 
-# s3sync -d 1/ s3://knut-test-s3sync/
-(1 / 3) 05/11/pwd_luzifer_io.png Skip
-(2 / 3) 07/26/bkm.png Skip
-(3 / 3) 07/26/luzifer_io.png Skip
+# s3sync --delete ./ s3://test/
 
-# rm -rf 1/05
-# s3sync -d s3://knut-test-s3sync/ 1/
-(1 / 3) 05/11/pwd_luzifer_io.png OK
-(2 / 3) 07/26/bkm.png Skip
-(3 / 3) 07/26/luzifer_io.png Skip
+# touch test.txt
+# rm test2.txt
+
+# s3sync --delete ./ s3://test/
+time="2023-06-09T17:15:29+02:00" level=info msg="deleted remote file" filename=test2.txt
+time="2023-06-09T17:15:29+02:00" level=info msg="transferred file" filename=test.txt
 ```
