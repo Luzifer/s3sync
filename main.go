@@ -10,7 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/Luzifer/rconfig/v2"
-	"github.com/Luzifer/s3sync/pkg/fsprovider"
+	"github.com/Luzifer/s3sync/v2/pkg/fsprovider"
 )
 
 var (

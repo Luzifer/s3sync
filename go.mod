@@ -1,4 +1,4 @@
-module github.com/Luzifer/s3sync
+module github.com/Luzifer/s3sync/v2
 
 go 1.20
 

@@ -1,3 +1,14 @@
+# 2.0.0 / 2023-06-09
+
+**⚠ Breaking Changes:**
+- MD5 checksums are no longer used to check for file changes
+- Logging to stdout was dropped and log-format changed
+
+**ℹ Changelog:**
+
+  * Breaking: Refactor, update deps, add MinIO support
+  * Replace deprecated vendoring with Go modules support
+
 # 1.3.0 / 2017-11-13
 
   * Update dependencies, switch to dep for vendoring
